@@ -1,0 +1,42 @@
+seed: 20260511
+episode_steps: 24
+data_dir: Simulator/data/datasets_2026_04_month
+output_dir: Simulator/outputs/runs
+figures_dir: Simulator/figures
+action_mode: continuous
+discrete_levels: 5
+no_physics_penalty: false
+
+market:
+  initial_liquidity: 1.0
+  initial_token_price: 1.0
+  min_reward_ratio: 0.05
+  max_reward_ratio: 0.65
+  min_liquidity_ratio: 0.20
+  max_liquidity_ratio: 0.95
+  max_burn_rate: 0.20
+  max_total_allocation: 0.98
+  static_reward_ratio: 0.20
+  static_liquidity_ratio: 0.80
+  static_burn_rate: 0.02
+
+reward:
+  drawdown_penalty: 1.50
+  action_jitter_penalty: 0.25
+  unmet_demand_penalty: 0.40
+  physics_penalty: 2.00
+  fairness_penalty: 0.20
+
+training:
+  timesteps: 10000
+  n_envs: 1
+  learning_rate: 0.0003
+  batch_size: 64
+  gamma: 0.98
+
+evaluation:
+  episodes: 5
+  policies:
+    - static
+    - random
+    - myopic

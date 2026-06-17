@@ -1,0 +1,5 @@
+number_of_agents,steps,benchmark_method,market_update_latency_ms,event_log_write_latency_ms,coordination_success_rate,projected_events
+50,24,measured,1072.8657920044498,0.22240169817671016,1.0,4824.0
+250,24,monthly_load_profile_replay_projection,5364.328960022249,0.22240169817671016,1.0,24120.0
+500,24,monthly_load_profile_replay_projection,10728.657920044498,0.22240169817671016,1.0,48240.0
+1000,24,monthly_load_profile_replay_projection,21457.315840088995,0.22240169817671016,1.0,96480.0

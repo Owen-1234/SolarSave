@@ -1,0 +1,7 @@
+attack_type,detector,records,tp,tn,fp,fn,precision,recall,f1,false_acceptance_rate,false_rejection_rate,comparison_scope
+dataset_fdia,3-sigma,36000,1379,34200,0,421,1.0,0.7661111111111111,0.8675684177414281,0.2338888888888889,0.0,original_monthly_dataset
+dataset_fdia,IQR/MAD,36000,1800,34200,0,0,1.0,1.0,1.0,0.0,0.0,original_monthly_dataset
+dataset_fdia,physics-bound,36000,1551,34200,0,249,1.0,0.8616666666666667,0.9256938227394808,0.13833333333333334,0.0,original_monthly_dataset
+dataset_fdia,physics+temporal,36000,1800,34199,1,0,0.9994447529150472,1.0,0.9997222993612885,0.0,2.9239766081871346e-05,original_monthly_dataset
+dataset_fdia,physics+temporal+neighbor,36000,1800,34200,0,0,1.0,1.0,1.0,0.0,0.0,original_monthly_dataset
+dataset_fdia,adaptive-solaragent,36000,1800,34200,0,0,1.0,1.0,1.0,0.0,0.0,original_monthly_dataset

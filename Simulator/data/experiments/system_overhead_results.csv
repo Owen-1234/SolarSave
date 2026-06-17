@@ -1,0 +1,11 @@
+layer,metric,value
+closed_loop,episode_24h_ms,1462.055291995057
+event_log,ms_per_event,0.3030794552228559
+coordination,agent_step_latency_ms,64.15716699848417
+solar_agent,ms_per_report,1.2831433399696834
+scalability,episode_24h_ms,987.7226670068922
+scalability,episode_24h_events,4824.0
+scalability,episode_168h_ms,7343.129291999503
+scalability,episode_168h_events,33768.0
+scalability,episode_720h_ms,32016.620750000584
+scalability,episode_720h_events,144720.0

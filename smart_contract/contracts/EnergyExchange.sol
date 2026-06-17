@@ -11,6 +11,8 @@ interface ISolarToken {
 contract EnergyExchange is Ownable {
     ISolarToken public rewardToken;
 
+    uint256 public constant BPS = 10_000;
+    uint256 public rewardRatioBps = 2_000;
     uint256 public globalSupplyEnergy;
     uint256 public totalDemandEnergy;
     uint256 public simulatorStepSeconds;
@@ -25,6 +27,7 @@ contract EnergyExchange is Ownable {
     event PersonalRewardClaimed(address indexed user, uint256 amountWei);
     event EnergyPurchased(address indexed buyer, uint256 factoryId, uint256 energyAmount, uint256 costWei);
     event FactoryEnergyConsumed(uint256 factoryId, uint256 amount);
+    event SplitRatioUpdated(uint256 rewardRatioBps, uint256 liquidityRatioBps);
 
     constructor(address _rewardToken) Ownable(msg.sender) {
         rewardToken = ISolarToken(_rewardToken);
@@ -40,7 +43,7 @@ contract EnergyExchange is Ownable {
         require(users.length == userEnergy.length, "Length mismatch");
 
         for (uint256 i = 0; i < users.length; i++) {
-            uint256 rewardEnergy = (userEnergy[i] * 25) / 100;
+            uint256 rewardEnergy = (userEnergy[i] * rewardRatioBps) / BPS;
             uint256 rewardWei = (rewardEnergy * 1e18) / 100_000;
             if (rewardWei > 0) {
                 personalRewardWei[users[i]] += rewardWei;
@@ -48,7 +51,7 @@ contract EnergyExchange is Ownable {
             }
         }
 
-        uint256 supplyEnergy = (totalEnergy * 75) / 100;
+        uint256 supplyEnergy = (totalEnergy * (BPS - rewardRatioBps)) / BPS;
         if (supplyEnergy > 0) {
             globalSupplyEnergy += supplyEnergy;
         }
@@ -56,6 +59,12 @@ contract EnergyExchange is Ownable {
         totalDemandEnergy = demandEnergy;
         lastMarketStepAt = block.timestamp;
         emit MarketStepUpdated(supplyEnergy, demandEnergy, block.timestamp);
+    }
+
+    function setRewardRatioBps(uint256 ratio) external onlyOwner {
+        require(ratio <= BPS, "Invalid ratio");
+        rewardRatioBps = ratio;
+        emit SplitRatioUpdated(ratio, BPS - ratio);
     }
 
     function setSimulatorStepSeconds(uint256 stepSeconds) external onlyOwner {

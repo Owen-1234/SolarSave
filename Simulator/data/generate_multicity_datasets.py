@@ -27,6 +27,9 @@ SIM_DATE = "2026-05-01"
 TIMEZONE = "Asia/Shanghai"
 RNG_SEED = 20260511
 NODES_PER_CITY = 10
+DEFAULT_REWARD_SHARE = 0.20
+DEFAULT_RESERVE_BUFFER_MW = 0.018
+SLIPPAGE_EPSILON_MW = 0.045
 
 
 @dataclass(frozen=True)
@@ -187,7 +190,11 @@ def make_generation(
     return generation
 
 
-def make_market_liquidity(generation: pd.DataFrame) -> pd.DataFrame:
+def make_market_liquidity(
+    generation: pd.DataFrame,
+    reward_share: float = DEFAULT_REWARD_SHARE,
+    reserve_buffer_MW: float = DEFAULT_RESERVE_BUFFER_MW,
+) -> pd.DataFrame:
     verified = generation[generation["verification_status"] == "verified"].copy()
     verified["verified_MW"] = verified["P_reported_W"] / 1_000_000
 
@@ -197,18 +204,37 @@ def make_market_liquidity(generation: pd.DataFrame) -> pd.DataFrame:
         .rename(columns={"verified_MW": "total_verified_MW"})
         .sort_values("hour")
     )
-    hourly["solarchain_liquidity_MW"] = hourly["total_verified_MW"] * 0.92 + 0.018
-    hourly["baseline_liquidity_MW"] = hourly["total_verified_MW"] * 0.61 + 0.008
-    hourly["slippage_solarchain_pct"] = 0.18 / (
-        hourly["solarchain_liquidity_MW"] + 0.045
+    liquidity_share = 1.0 - reward_share
+    daylight = hourly["total_verified_MW"] > 0.002
+    hourly["reward_share"] = reward_share
+    hourly["liquidity_share"] = liquidity_share
+    hourly["producer_reward_MW"] = hourly["total_verified_MW"] * reward_share
+    hourly["solarchain_liquidity_MW"] = hourly["total_verified_MW"] * liquidity_share + reserve_buffer_MW
+    hourly["demand_MW"] = np.where(daylight, np.maximum(0.008, hourly["total_verified_MW"] * 0.72), 0.008)
+    hourly["fulfilled_demand_MW"] = np.minimum(hourly["demand_MW"], hourly["solarchain_liquidity_MW"])
+    hourly["unmet_demand_MW"] = np.maximum(0.0, hourly["demand_MW"] - hourly["fulfilled_demand_MW"])
+    hourly["slippage_solarchain_pct"] = 100.0 * hourly["fulfilled_demand_MW"] / (
+        hourly["solarchain_liquidity_MW"] + SLIPPAGE_EPSILON_MW
     )
-    hourly["slippage_baseline_pct"] = 0.31 / (hourly["baseline_liquidity_MW"] + 0.028)
+
+    baseline_reward_share = 0.50
+    baseline_liquidity_share = 1.0 - baseline_reward_share
+    hourly["baseline_liquidity_MW"] = hourly["total_verified_MW"] * baseline_liquidity_share + 0.008
+    hourly["slippage_baseline_pct"] = 100.0 * hourly["fulfilled_demand_MW"] / (
+        hourly["baseline_liquidity_MW"] + 0.028
+    )
 
     columns = [
         "timestamp",
         "hour",
         "total_verified_MW",
+        "reward_share",
+        "liquidity_share",
+        "producer_reward_MW",
         "solarchain_liquidity_MW",
+        "demand_MW",
+        "fulfilled_demand_MW",
+        "unmet_demand_MW",
         "baseline_liquidity_MW",
         "slippage_solarchain_pct",
         "slippage_baseline_pct",
@@ -216,7 +242,13 @@ def make_market_liquidity(generation: pd.DataFrame) -> pd.DataFrame:
     return hourly[columns].round(
         {
             "total_verified_MW": 6,
+            "reward_share": 3,
+            "liquidity_share": 3,
+            "producer_reward_MW": 6,
             "solarchain_liquidity_MW": 6,
+            "demand_MW": 6,
+            "fulfilled_demand_MW": 6,
+            "unmet_demand_MW": 6,
             "baseline_liquidity_MW": 6,
             "slippage_solarchain_pct": 4,
             "slippage_baseline_pct": 4,

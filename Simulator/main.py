@@ -9,15 +9,20 @@ import uvicorn
 import asyncio
 import json
 import string
+import pandas as pd
 from web3 import Web3
 from eth_account import Account
+from agents import CoordinationLoop, EpisodeConfig
+from agents.api_bridge import audit_events, loop_status, market_summary, recent_events
+from agents.types import AgentEvent
 
 # Load environment variables
 load_dotenv()
-api_key = "0771554279f9204c977c7bf619352830"
+api_key = os.getenv("SOLAR_API_KEY", "0771554279f9204c977c7bf619352830")
 SIMULATOR_RPC_URL = os.getenv("SIMULATOR_RPC_URL", "http://127.0.0.1:8545")
 SIMULATOR_PRIVATE_KEY = os.getenv("SIMULATOR_PRIVATE_KEY", "")
 SIMULATOR_STEP_SECONDS = int(os.getenv("SIMULATOR_STEP_SECONDS", "3600"))
+AGENT_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "data", "experiments")
 
 
 def resolve_energy_sim_enabled(raw_value, private_key):
@@ -102,6 +107,24 @@ FACTORY_ABI = [
 
 ENERGY_EXCHANGE_ABI = [
     {
+        "inputs": [],
+        "name": "rewardRatioBps",
+        "outputs": [
+            {"internalType": "uint256", "name": "", "type": "uint256"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {"internalType": "uint256", "name": "ratio", "type": "uint256"}
+        ],
+        "name": "setRewardRatioBps",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "inputs": [
             {"internalType": "address[]", "name": "users", "type": "address[]"},
             {"internalType": "uint256[]", "name": "userEnergy", "type": "uint256[]"},
@@ -157,10 +180,17 @@ ENERGY_EXCHANGE_ABI = [
 # Initialize FastAPI app
 app = FastAPI()
 
+def cors_origins():
+    raw = os.getenv("SIMULATOR_CORS_ORIGINS", "*")
+    if raw.strip() == "*":
+        return ["*"]
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 # Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust to specific frontend domains for security, e.g., ["http://localhost:3000"]
+    allow_origins=cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all HTTP headers
@@ -375,6 +405,178 @@ class MultiSolarRequest(BaseModel):
     start_date: str
     end_date: Optional[str] = None
     freq: str = "60min"
+
+
+class AgentEpisodeRequest(BaseModel):
+    start_step: int = 0
+    steps: int = 24
+    reward_share: float = 0.20
+    demand_multiplier: float = 1.0
+    planner_policy: str = "balanced"
+    mode: str = "connected_demo"
+    max_agents: Optional[int] = None
+
+
+AGENT_LOOP: Optional[CoordinationLoop] = None
+
+
+def agent_config_from_request(request: AgentEpisodeRequest) -> EpisodeConfig:
+    return EpisodeConfig(
+        start_step=request.start_step,
+        steps=request.steps,
+        reward_share=request.reward_share,
+        demand_multiplier=request.demand_multiplier,
+        planner_policy=request.planner_policy,
+        mode=request.mode,
+        max_agents=request.max_agents,
+    )
+
+
+def ensure_agent_loop(request: Optional[AgentEpisodeRequest] = None) -> CoordinationLoop:
+    global AGENT_LOOP
+    if AGENT_LOOP is None or request is not None:
+        AGENT_LOOP = CoordinationLoop(agent_config_from_request(request or AgentEpisodeRequest()))
+    return AGENT_LOOP
+
+
+@app.get("/agents/status")
+async def agents_status():
+    return loop_status(AGENT_LOOP)
+
+
+@app.post("/agents/step")
+async def agents_step(request: AgentEpisodeRequest):
+    loop = ensure_agent_loop(request)
+    timestamps = loop.environment.timestamps(request.start_step, 1)
+    if not timestamps:
+        return {"status": "error", "message": "start_step is outside the monthly dataset"}
+    result = loop.step(timestamps[0], request.start_step)
+    return {
+        "status": "success",
+        "market_summary": result["market_summary"].__dict__,
+        "decisions": loop.last_decisions[:10],
+        "events_written": len(loop.event_bus.events),
+    }
+
+
+@app.post("/agents/run_episode")
+async def agents_run_episode(request: AgentEpisodeRequest):
+    loop = ensure_agent_loop(request)
+    result = loop.run()
+    return {"status": "success", **result}
+
+
+@app.get("/agents/events")
+async def agents_events(limit: int = 100):
+    return {"status": "success", "events": recent_events(AGENT_OUTPUT_DIR, limit)}
+
+
+@app.get("/agents/audit")
+async def agents_audit(limit: int = 100):
+    return {"status": "success", "events": audit_events(AGENT_OUTPUT_DIR, limit)}
+
+
+@app.get("/agents/market_summary")
+async def agents_market_summary(limit: int = 24):
+    return {"status": "success", "market_summary": market_summary(AGENT_OUTPUT_DIR, limit)}
+
+
+@app.post("/agents/settle_verified_step")
+async def agents_settle_verified_step():
+    loop = ensure_agent_loop()
+    if loop.last_market_summary is None:
+        request = AgentEpisodeRequest(steps=1, mode="connected_demo")
+        loop = ensure_agent_loop(request)
+        timestamp = loop.environment.timestamps(0, 1)[0]
+        loop.step(timestamp, 0)
+
+    approved = [row for row in loop.last_decisions if row["planner_action"] == "approve"]
+    market = loop.last_market_summary
+    if not any(min(row["p_reported_W"], row["p_max_W"]) > 0 for row in approved):
+        decisions_path = os.path.join(AGENT_OUTPUT_DIR, "agent_decisions.csv")
+        market_path = os.path.join(AGENT_OUTPUT_DIR, "agent_market_summary.csv")
+        if os.path.exists(decisions_path) and os.path.exists(market_path):
+            decisions_frame = pd.read_csv(decisions_path)
+            market_frame = pd.read_csv(market_path)
+            approved_frame = decisions_frame[
+                (decisions_frame["planner_action"] == "approve")
+                & (decisions_frame[["p_reported_W", "p_max_W"]].min(axis=1) > 0)
+            ]
+            if not approved_frame.empty:
+                fallback_step = int(approved_frame["step"].max())
+                approved = approved_frame[approved_frame["step"] == fallback_step].to_dict("records")
+                market_row = market_frame[market_frame["step"] == fallback_step].tail(1)
+                if not market_row.empty:
+                    market = type("MarketDTO", (), market_row.iloc[0].to_dict())()
+
+    users = []
+    user_energy = []
+    for index, row in enumerate(approved):
+        users.append(Web3.to_checksum_address(f"0x{index + 1:040x}"))
+        user_energy.append(int(max(0, min(row["p_reported_W"], row["p_max_W"]))))
+
+    total_energy = int(sum(user_energy))
+    demand_energy = int(market.factory_demand_W if market else 0)
+    tx_hash = ""
+    on_chain_action = "settlement_skipped_no_chain"
+
+    w3, account = build_web3()
+    if w3 and account:
+        addresses = load_contract_addresses()
+        exchange_address = addresses.get("energyExchange")
+        if exchange_address:
+            exchange_contract = w3.eth.contract(address=exchange_address, abi=ENERGY_EXCHANGE_ABI)
+            nonce = w3.eth.get_transaction_count(account.address, "pending")
+            tx = exchange_contract.functions.updateMarketStep(
+                users,
+                user_energy,
+                total_energy,
+                demand_energy,
+            ).build_transaction({"from": account.address})
+            before_nonce = nonce
+            nonce = send_transaction(w3, account, tx, nonce)
+            latest_block = w3.eth.get_block("latest", full_transactions=True)
+            tx_hash = latest_block.transactions[-1].hash.hex() if latest_block.transactions else ""
+            on_chain_action = f"local_evm_settlement_nonce_{before_nonce}_{nonce}"
+
+    if not tx_hash:
+        tx_hash = Web3.keccak(text=json.dumps({
+            "users": users,
+            "user_energy": user_energy,
+            "total_energy": total_energy,
+            "demand_energy": demand_energy,
+            "mode": "simulated_audit_hash",
+        }, sort_keys=True)).hex()
+        on_chain_action = "simulated_settlement_hash_no_rpc"
+
+    loop.event_bus.emit(
+        AgentEvent(
+            episode_id=loop.config.episode_id,
+            step=market.step if market else 0,
+            timestamp=market.timestamp if market else "",
+            agent_id="energy-exchange",
+            agent_type="settlement",
+            event_type="on_chain_settlement",
+            on_chain_action=on_chain_action,
+            tx_hash=tx_hash,
+            market_feedback={
+                "users": users,
+                "user_energy": user_energy,
+                "total_energy": total_energy,
+                "demand_energy": demand_energy,
+            },
+        ),
+        audit=True,
+        connected=True,
+    )
+    return {
+        "status": "success",
+        "on_chain_action": on_chain_action,
+        "tx_hash": tx_hash,
+        "approved_agents": len(approved),
+        "total_energy": total_energy,
+        "demand_energy": demand_energy,
+    }
 
 @app.post("/run_model/")
 async def run_model(request: SolarRequest):
