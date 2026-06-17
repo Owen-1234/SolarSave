@@ -6,8 +6,6 @@ import PanelWindows from "./PanelWindows";
 import ThreeDPopup from "./ThreeDPopup";
 import TradeConfirm from "./TradeConfirm";
 import FactoryConfirm from "./FactoryConfirm";
-import AgentTrace from "./AgentTrace";
-import AgentCoordination from "./AgentCoordination";
 import kakilogo from "../../images/kali.png";
 import { TransactionContext } from "../context/TransactionContext";
 import EnergyExchangeABI from "../utils/test/EnergyExchange.json";
@@ -1024,11 +1022,6 @@ const setShowNotification = (msg) => {
               Claim {rewardPreview ? Number(ethers.utils.formatUnits(rewardPreview, 18)).toFixed(2) : "..."} SOLR
             </button>
           </div>
-        </div>
-
-        <div className="agent-console">
-          <AgentCoordination />
-          <AgentTrace />
         </div>
 
         <div className="planner-console">
