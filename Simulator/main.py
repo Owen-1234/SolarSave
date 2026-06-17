@@ -18,7 +18,7 @@ from agents.types import AgentEvent
 
 # Load environment variables
 load_dotenv()
-api_key = os.getenv("SOLAR_API_KEY", "0771554279f9204c977c7bf619352830")
+api_key = os.getenv("SOLAR_API_KEY", "")
 SIMULATOR_RPC_URL = os.getenv("SIMULATOR_RPC_URL", "http://127.0.0.1:8545")
 SIMULATOR_PRIVATE_KEY = os.getenv("SIMULATOR_PRIVATE_KEY", "")
 SIMULATOR_STEP_SECONDS = int(os.getenv("SIMULATOR_STEP_SECONDS", "3600"))
@@ -181,7 +181,10 @@ ENERGY_EXCHANGE_ABI = [
 app = FastAPI()
 
 def cors_origins():
-    raw = os.getenv("SIMULATOR_CORS_ORIGINS", "*")
+    raw = os.getenv(
+        "SIMULATOR_CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173",
+    )
     if raw.strip() == "*":
         return ["*"]
     return [origin.strip() for origin in raw.split(",") if origin.strip()]

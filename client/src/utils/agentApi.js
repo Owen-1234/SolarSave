@@ -1,8 +1,7 @@
-const AGENT_API_BASE =
-  import.meta.env.VITE_SOLAR_AGENT_API || "http://localhost:8000";
+import { solarApiUrl } from "./apiBase";
 
 const request = async (path, options = {}) => {
-  const response = await fetch(`${AGENT_API_BASE}${path}`, {
+  const response = await fetch(solarApiUrl(path), {
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),

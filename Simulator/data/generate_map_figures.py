@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Iterable
 
@@ -15,7 +16,7 @@ from matplotlib.patches import Circle, Polygon, Wedge
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DATASET_DIR = BASE_DIR / "datasets"
+DATASET_DIR = BASE_DIR / os.getenv("SOLARCHAIN_DATASET_DIR", "datasets_2026_04_month")
 OUTPUT_DIR = BASE_DIR / "visualizations"
 MAP_DIR = BASE_DIR / "assets" / "china_map"
 CHINA_GEOJSON = MAP_DIR / "china_boundary_full.geojson"

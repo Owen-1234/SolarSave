@@ -82,7 +82,7 @@ const About = ({ onClose }) => {
             <ul>
               <li>
                 <strong>Candidate DER Samples:</strong> loaded from
-                <code> client/public/datasets/spatiotemporal_generation.csv</code>.
+                <code> client/public/datasets_2026_04_month/spatiotemporal_generation.csv</code>.
               </li>
               <li>
                 <strong>Map markers:</strong> grouped by <code>node_id</code>, so the map
@@ -90,7 +90,7 @@ const About = ({ onClose }) => {
               </li>
               <li>
                 <strong>Market Impact:</strong> loaded from
-                <code> client/public/datasets/market_liquidity.csv</code>.
+                <code> client/public/datasets_2026_04_month/market_liquidity.csv</code>.
               </li>
               <li>
                 <strong>Ready MW:</strong> the verified, non-rejected generation estimate

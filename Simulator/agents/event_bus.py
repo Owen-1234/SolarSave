@@ -33,7 +33,7 @@ EVENT_COLUMNS = [
 class EventBus:
     """Append-only event log with a hash chain for EIoT auditability."""
 
-    def __init__(self, output_dir: Path, event_filename: str = "eiot_event_log.csv") -> None:
+    def __init__(self, output_dir: Path, event_filename: str = "eiot_event_log.csv", reset: bool = True) -> None:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.event_path = self.output_dir / event_filename
@@ -41,13 +41,25 @@ class EventBus:
         self.connected_path = self.output_dir / "connected_system_trace.csv"
         self.previous_hash = "GENESIS"
         self.events: list[AgentEvent] = []
-        self._reset_files()
+        if reset:
+            self._reset_files()
+        else:
+            self._resume_hash_chain()
 
     def _reset_files(self) -> None:
         for path in (self.event_path, self.audit_path, self.connected_path):
             with path.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.DictWriter(handle, fieldnames=EVENT_COLUMNS)
                 writer.writeheader()
+
+    def _resume_hash_chain(self) -> None:
+        if not self.event_path.exists():
+            self._reset_files()
+            return
+        with self.event_path.open("r", newline="", encoding="utf-8") as handle:
+            rows = list(csv.DictReader(handle))
+        if rows:
+            self.previous_hash = rows[-1].get("record_hash") or "GENESIS"
 
     def emit(self, event: AgentEvent, audit: bool = False, connected: bool = False) -> AgentEvent:
         payload = asdict(event)

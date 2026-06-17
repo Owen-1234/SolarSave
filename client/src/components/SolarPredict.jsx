@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { FiSun } from "react-icons/fi";
 import "../style/Test.css";
+import { solarApiUrl } from "../utils/apiBase";
 
 const formatLocalDate = (date) => {
   const y = date.getFullYear();
@@ -57,7 +58,7 @@ const SolarPredict = () => {
     setAnimationDelay(0);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/run_model/", {
+      const response = await fetch(solarApiUrl("/run_model/"), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

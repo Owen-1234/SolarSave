@@ -115,7 +115,9 @@ def calculate_combined_output(api_key, coordinates, start_date, end_date, freq='
 if __name__ == "__main__":
     # Load environment variables
     load_dotenv()
-    api_key = "0771554279f9204c977c7bf619352830"
+    api_key = os.getenv("SOLAR_API_KEY", "")
+    if not api_key:
+        raise RuntimeError("Set SOLAR_API_KEY before running this example.")
     coordinates = [(45.739, 120.683), (46.739, 121.683), (47.739, 122.683)]
 
     # Set time range

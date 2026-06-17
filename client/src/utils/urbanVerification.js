@@ -106,13 +106,14 @@ export const buildRegistrationEvidence = (recordOrPanel = {}) => {
 
 export const loadUrbanVerificationData = async () => {
   const baseUrl = import.meta.env.BASE_URL || "/";
+  const datasetDir = import.meta.env.VITE_URBAN_DATASET_DIR || "datasets_2026_04_month";
   const [generationResponse, liquidityResponse] = await Promise.all([
-    fetch(`${baseUrl}datasets/spatiotemporal_generation.csv`),
-    fetch(`${baseUrl}datasets/market_liquidity.csv`),
+    fetch(`${baseUrl}${datasetDir}/spatiotemporal_generation.csv`),
+    fetch(`${baseUrl}${datasetDir}/market_liquidity.csv`),
   ]);
 
   if (!generationResponse.ok || !liquidityResponse.ok) {
-    throw new Error("Unable to load UrbComp verification datasets");
+    throw new Error(`Unable to load UrbComp verification datasets from ${datasetDir}`);
   }
 
   const [generationText, liquidityText] = await Promise.all([

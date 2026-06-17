@@ -98,7 +98,7 @@ const MarketImpact = () => {
           ))}
         </div>
         <div className="impact-legend">
-          <span><i className="legend-solarchain"></i> SolarChain 1:3 split</span>
+          <span><i className="legend-solarchain"></i> SolarChain selected split</span>
           <span><i className="legend-baseline"></i> No-split baseline</span>
         </div>
       </div>

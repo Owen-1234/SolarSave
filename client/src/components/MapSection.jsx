@@ -17,6 +17,7 @@ import { ethers } from "ethers";
 import SolarPanels from "../utils/test/SolarPanels.json";
 import "../style/MapSection.css";
 import axios from "axios";
+import { solarApiUrl } from "../utils/apiBase";
 import { buildRegistrationEvidence, loadUrbanVerificationData } from "../utils/urbanVerification";
 const contractAddress = contractAddresses.solarPanels;
 const factoryAddress = contractAddresses.factory;
@@ -287,7 +288,7 @@ const MapSection = () => {
       const fixedLat = lat > 90 || lat < -90 ? lat / 10000 : lat;
       const fixedLng = lng > 180 || lng < -180 ? lng / 10000 : lng;
       const { startDate, endDate } = getPredictionDateRange();
-      const response = await axios.post("http://127.0.0.1:8000/run_model/", {
+      const response = await axios.post(solarApiUrl("/run_model/"), {
         lat: fixedLat,
         lon: fixedLng,
         start_date: startDate,

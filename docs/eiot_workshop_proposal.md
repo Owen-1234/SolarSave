@@ -2,6 +2,12 @@
 
 面向 The 9th International Workshop on Embodied Intelligence of Things (EIoT 2026)
 
+> Status note: this is an earlier planning document. Several gaps described
+> below have since been implemented in `Simulator/agents/`,
+> `Simulator/experiments/`, the monthly `datasets_2026_04_month/` benchmark,
+> and the frontend SolarAgents trace panels. Use the repository `README.md` and
+> `docs/solaragents_updated_proposal.md` for the current implementation state.
+
 ## 定位
 
 建议将当前 SolarChain 从“区块链支持的城市太阳能交易平台”重构为：

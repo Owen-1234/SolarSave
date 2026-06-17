@@ -10,7 +10,7 @@
     "hardhat": "^2.24.1"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "hardhat test"
   },
   "keywords": [],
   "author": "",

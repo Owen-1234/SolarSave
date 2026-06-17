@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import matplotlib.dates as mdates
@@ -12,7 +13,7 @@ import seaborn as sns
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DATASET_DIR = BASE_DIR / "datasets"
+DATASET_DIR = BASE_DIR / os.getenv("SOLARCHAIN_DATASET_DIR", "datasets_2026_04_month")
 OUTPUT_DIR = BASE_DIR / "visualizations"
 
 
@@ -107,7 +108,7 @@ def reviewer_generation_timeseries(generation: pd.DataFrame) -> None:
 def reviewer_liquidity_depth(market: pd.DataFrame) -> None:
     totals = pd.DataFrame(
         {
-            "Policy": ["1:3 Forced-Split", "No-Split Baseline"],
+            "Policy": ["SolarChain Selected Split", "Baseline"],
             "Average": [
                 market["solarchain_liquidity_MW"].mean(),
                 market["baseline_liquidity_MW"].mean(),
@@ -187,7 +188,7 @@ def comparative_policy_line_chart(market: pd.DataFrame) -> None:
     fig, ax1 = plt.subplots(figsize=(8, 4.5))
     
     ax1.plot(market["hour"], market["solarchain_liquidity_MW"], marker="o", 
-             label="1:3 Forced-Split (Liquidity)", color="#1f77b4", linestyle="-")
+             label="SolarChain Selected Split (Liquidity)", color="#1f77b4", linestyle="-")
     ax1.plot(market["hour"], market["baseline_liquidity_MW"], marker="s", 
              label="No-Split Baseline (Liquidity)", color="#7f7f7f", linestyle="-")
     ax1.set_xlabel("Hour of Day")
@@ -195,7 +196,7 @@ def comparative_policy_line_chart(market: pd.DataFrame) -> None:
     
     ax2 = ax1.twinx()
     ax2.plot(market["hour"], market["slippage_solarchain_pct"], marker="^", 
-             label="1:3 Forced-Split (Slippage)", color="#d62728", linestyle="--")
+             label="SolarChain Selected Split (Slippage)", color="#d62728", linestyle="--")
     ax2.plot(market["hour"], market["slippage_baseline_pct"], marker="x", 
              label="No-Split Baseline (Slippage)", color="#8c564b", linestyle="--")
     ax2.set_ylabel("Estimated Slippage (%)", color="black")
@@ -276,7 +277,10 @@ def intra_city_generation_boxplots(generation: pd.DataFrame) -> None:
     
     # Muted academic colors
     sns.boxplot(data=daylight, x="city", y="reported_kW", hue="city", ax=ax, 
-                palette="Pastel1", showfliers=False, width=0.6, legend=False)
+                palette="Pastel1", showfliers=False, width=0.6)
+    legend = ax.get_legend()
+    if legend is not None:
+        legend.remove()
     sns.stripplot(data=daylight, x="city", y="reported_kW", ax=ax, 
                   color="black", alpha=0.15, size=2, jitter=True)
                   

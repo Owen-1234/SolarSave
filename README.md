@@ -8,6 +8,26 @@ SolarChain is designed as an interactive decision-support tool for urban planner
 
 Project naming note: the product name is **SolarChain**, while the repository/folder name remains `SolarSave`.
 
+## **EIoT Research Positioning**
+
+For EIoT-style evaluation, SolarChain is framed as **SolarAgents**: a
+physics-grounded embodied-IoT coordination testbed for verifiable urban solar
+energy systems. Each distributed PV node is represented as a lightweight
+embodied agent with physical attributes, environmental perception, generation
+reporting behavior, verification history, trust state, calibration memory, and
+market feedback. The blockchain layer is used as a verifiable settlement and
+audit layer after physical verification and planner review, rather than as the
+sole research contribution.
+
+The EIoT experiment suite covers:
+
+- Closed-loop monthly agent episodes over 50 embodied PV agents and 720 hourly
+  coordination steps.
+- Persistent event, audit, connected-system, decision, market, and agent-state
+  traces with hash-chained records.
+- FDIA attack taxonomy, adaptive verification, reward/liquidity ratio sweep,
+  system-overhead measurement, and scale projection experiments.
+
 ---
 ## **Demo Video**
 
@@ -65,15 +85,16 @@ https://github.com/user-attachments/assets/958c321f-7562-49f2-bd08-97209db8f078
 ## **Dataset & Research Enablement**
 
 SolarChain includes a reproducible, multi-city simulation dataset under
-`Simulator/data/datasets/`. The dataset covers a 24-hour cycle on
-`2026-05-01` in `Asia/Shanghai`, combines `pvlib` solar modeling with
+`Simulator/data/datasets_2026_04_month/`. The EIoT benchmark dataset covers a
+one-month hourly episode from `2026-04-01` to `2026-05-01` in
+`Asia/Shanghai`, combines `pvlib` solar modeling with
 Open-Meteo historical weather observations, and injects exactly 5% FDIA
 records for anomaly-detection benchmarking.
 
 Generate or refresh the dataset:
 
 ```bash
-conda run -n SolarSave python Simulator/data/generate_multicity_datasets.py
+conda run -n SolarSave python Simulator/data/generate_monthly_datasets.py
 ```
 
 Generate the reviewer and canonical research figures:
@@ -84,16 +105,19 @@ conda run -n SolarSave python Simulator/data/visualizations.py
 
 ### **Frontend Dataset Import**
 
-The planner workbench reads static CSV files from `client/public/datasets/`:
+The planner workbench reads static CSV files from
+`client/public/datasets_2026_04_month/` by default. Override this with
+`VITE_URBAN_DATASET_DIR` if you want the frontend to load another public CSV
+folder.
 
 | Frontend File | Used For |
 |---------------|----------|
-| `client/public/datasets/spatiotemporal_generation.csv` | Candidate DER queue, map markers, physics-boundary review, FDIA status |
-| `client/public/datasets/market_liquidity.csv` | Market Impact view and SolarChain-vs-baseline liquidity comparison |
+| `client/public/datasets_2026_04_month/spatiotemporal_generation.csv` | Candidate DER queue, map markers, physics-boundary review, FDIA status |
+| `client/public/datasets_2026_04_month/market_liquidity.csv` | Market Impact view and SolarChain-vs-baseline liquidity comparison |
 
 To update the client-side candidate data, replace those CSV files and refresh the frontend.
 The queue displays all hourly records from `spatiotemporal_generation.csv`; the map groups
-those records by `node_id`, so 24 hourly samples for one DER node appear as one location
+those records by `node_id`, so 720 hourly samples for one DER node appear as one location
 marker. Approved candidates can be converted into on-chain solar panels through the
 planner review and MetaMask signature workflow.
 
@@ -111,9 +135,9 @@ Important planner metrics:
 | CSV File | Description | Records | Fields |
 |----------|-------------|---------|--------|
 | `urban_energy_nodes.csv` | Static metadata for distributed urban solar nodes across Beijing, Shanghai, Chengdu, Shenzhen, and Hangzhou. | 50 | `node_id`, `city`, `latitude`, `longitude`, `panel_area_m2`, `efficiency`, `temp_coefficient`, `install_date` |
-| `spatiotemporal_generation.csv` | Hourly node-level solar generation records with physical power bounds, reported power, and FDIA labels. | 1,200 | `timestamp`, `hour`, `node_id`, `city`, `latitude`, `longitude`, `irradiance_Wm2`, `air_temp_C`, `P_max_W`, `P_reported_W`, `fdia_detected`, `verification_status` |
-| `market_liquidity.csv` | Hourly market-liquidity comparison between SolarChain's 1:3 forced-split mechanism and the no-split baseline. | 24 | `timestamp`, `hour`, `total_verified_MW`, `solarchain_liquidity_MW`, `baseline_liquidity_MW`, `slippage_solarchain_pct`, `slippage_baseline_pct` |
-| `p2p_trades.csv` | Simulated P2P energy purchases by factories using verified liquidity and token-burning records. | 42 | `trade_id`, `timestamp`, `hour`, `factory_id`, `city`, `energy_purchased_MW`, `tokens_burned`, `exergy_dissipated_MJ` |
+| `spatiotemporal_generation.csv` | Hourly node-level solar generation records with physical power bounds, reported power, and FDIA labels. | 36,000 | `timestamp`, `hour`, `node_id`, `city`, `latitude`, `longitude`, `irradiance_Wm2`, `air_temp_C`, `P_max_W`, `P_reported_W`, `fdia_detected`, `verification_status` |
+| `market_liquidity.csv` | Hourly market-liquidity comparison between SolarChain's selected 20/80 reward-liquidity split and the baseline. | 720 | `timestamp`, `hour`, `total_verified_MW`, `reward_share`, `liquidity_share`, `producer_reward_MW`, `solarchain_liquidity_MW`, `demand_MW`, `fulfilled_demand_MW`, `unmet_demand_MW`, `baseline_liquidity_MW`, `slippage_solarchain_pct`, `slippage_baseline_pct` |
+| `p2p_trades.csv` | Simulated P2P energy purchases by factories using verified liquidity and token-burning records. | 1,185 | `trade_id`, `timestamp`, `hour`, `factory_id`, `city`, `energy_purchased_MW`, `tokens_burned`, `exergy_dissipated_MJ` |
 
 #### **`urban_energy_nodes.csv` Field Definitions**
 
@@ -152,7 +176,13 @@ Important planner metrics:
 | `timestamp` | Hourly market timestamp with `Asia/Shanghai` timezone offset. |
 | `hour` | Hour of day, from 0 to 23. |
 | `total_verified_MW` | Aggregated verified generation available to the market in megawatts. |
-| `solarchain_liquidity_MW` | Liquidity depth under the 1:3 forced-split SolarChain mechanism. |
+| `reward_share` | Producer reward share used by the selected configurable split. |
+| `liquidity_share` | Market liquidity share used by the selected configurable split. |
+| `producer_reward_MW` | Verified generation allocated to producer rewards in megawatts. |
+| `solarchain_liquidity_MW` | Liquidity depth under the selected SolarChain split. |
+| `demand_MW` | Simulated factory demand in megawatts. |
+| `fulfilled_demand_MW` | Demand served by verified liquidity in megawatts. |
+| `unmet_demand_MW` | Demand not served by verified liquidity in megawatts. |
 | `baseline_liquidity_MW` | Liquidity depth under the no-split baseline. |
 | `slippage_solarchain_pct` | Estimated slippage percentage under the SolarChain mechanism. |
 | `slippage_baseline_pct` | Estimated slippage percentage under the no-split baseline. |
@@ -191,7 +221,7 @@ token policies. Key variables include `energy_purchased_MW`, `tokens_burned`,
 `baseline_liquidity_MW`, `slippage_solarchain_pct`, and
 `slippage_baseline_pct`. These records support counterfactual analysis of burn
 rates, liquidity incentives, slippage controls, and the effect of SolarChain's
-1:3 forced-split mechanism compared with a no-split baseline.
+configurable reward/liquidity split compared with a baseline.
 
 **FDIA Anomaly Detection**  
 Machine-learning researchers can treat `spatiotemporal_generation.csv` as a
@@ -211,7 +241,7 @@ covering reviewer-response plots and canonical urban-computing figures:
 | Figure | Output File |
 |--------|-------------|
 | Theoretical generation vs reported generation with rejected FDIA points | `Simulator/data/visualizations/reviewer_a_generation_vs_reported_fdia.png` |
-| Liquidity depth comparison: 1:3 forced-split vs no-split baseline | `Simulator/data/visualizations/reviewer_a_liquidity_depth_comparison.png` |
+| Liquidity depth comparison: selected SolarChain split vs baseline | `Simulator/data/visualizations/reviewer_a_liquidity_depth_comparison.png` |
 | Spatio-temporal heatmap | `Simulator/data/visualizations/canonical_01_spatiotemporal_heatmap.png` |
 | Physics-bounded anomaly scatter plot | `Simulator/data/visualizations/canonical_02_physics_bounded_anomaly_scatter.png` |
 | Comparative policy line chart | `Simulator/data/visualizations/canonical_03_comparative_policy_line_chart.png` |
@@ -364,16 +394,16 @@ Local development fallback (Hardhat):
 
 - **Frontend cannot call simulator API**:
    - Ensure simulator is running on `127.0.0.1:8000`.
-   - Client components call `http://127.0.0.1:8000/run_model/`; if you change backend host/port, update frontend API URLs accordingly.
+   - Client components use `VITE_SOLAR_AGENT_API` and default to `http://localhost:8000`.
 
 - **Candidate DER Queue is empty**:
-   - Ensure `client/public/datasets/spatiotemporal_generation.csv` exists.
+   - Ensure `client/public/datasets_2026_04_month/spatiotemporal_generation.csv` exists, or set `VITE_URBAN_DATASET_DIR` to the folder you want to load.
    - Confirm the CSV header matches the documented dataset fields.
    - Refresh the frontend after replacing CSV files.
 
 - **Map shows fewer candidate markers than queue rows**:
    - This is expected: the queue shows hourly samples, while the map groups samples by `node_id`.
-   - For the bundled dataset, 1,200 hourly records become 50 DER node markers.
+   - For the bundled monthly dataset, 36,000 hourly records become 50 DER node markers.
 
 - **Approve opens registration but MetaMask does not sign**:
    - Ensure MetaMask is connected to the expected local/private chain.
@@ -393,7 +423,7 @@ Local development fallback (Hardhat):
 ```
 SolarSave/
 ├── client/                         # Frontend code
-│   ├── public/datasets/             # Static CSVs loaded by Planner Workbench
+│   ├── public/datasets_2026_04_month/ # Static CSVs loaded by Planner Workbench
 │   ├── src/                        # Frontend source
 │   │   ├── components/             # Shared React components
 │   │   ├── style/                  # CSS and style files

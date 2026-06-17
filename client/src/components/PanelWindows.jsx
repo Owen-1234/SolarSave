@@ -4,6 +4,7 @@ import Chart from "react-google-charts";
 import Draggable from "react-draggable";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import "../style/PanelWindows.css";
+import { solarApiUrl } from "../utils/apiBase";
 
 const formatLocalDate = (date) => {
   const y = date.getFullYear();
@@ -51,7 +52,7 @@ const PanelWindows = ({ panel, closeWindow }) => {
 
       const { startDate, endDate } = getDefaultDateRange();
 
-      const response = await axios.post("http://127.0.0.1:8000/run_model/", {
+      const response = await axios.post(solarApiUrl("/run_model/"), {
         lat: fixedLat,
         lon: fixedLng,
         start_date: startDate,

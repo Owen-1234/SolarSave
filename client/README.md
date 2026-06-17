@@ -42,10 +42,13 @@ npm run preview
 
 - Contract addresses are loaded from:
 	- `src/utils/contractAddress.json`
-- Simulator API requests are currently hardcoded in components to:
-	- `http://127.0.0.1:8000/run_model/`
+- Simulator API requests default to:
+	- `http://127.0.0.1:8000`
+- The planner workbench reads the monthly public dataset from:
+	- `public/datasets_2026_04_month/`
 
-If you change backend host or port, update those API URLs in frontend components.
+If you change backend host, port, or dataset folder, set `VITE_SOLAR_AGENT_API`
+or `VITE_URBAN_DATASET_DIR` before starting Vite.
 
 ## Troubleshooting
 
@@ -56,4 +59,3 @@ If you change backend host or port, update those API URLs in frontend components
 	- Make sure contracts are deployed to local chain and `src/utils/contractAddress.json` is up to date.
 - Prediction request fails:
 	- Ensure simulator is running on `127.0.0.1:8000`.
-

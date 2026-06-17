@@ -78,7 +78,7 @@ const Help = ({ onClose }) => {
             <h2>Importing Data</h2>
           </div>
           <div className="section-content">
-            <p>Replace the CSV files in <code>client/public/datasets</code>, then refresh the client.</p>
+            <p>Replace the CSV files in <code>client/public/datasets_2026_04_month</code>, or set <code>VITE_URBAN_DATASET_DIR</code>, then refresh the client.</p>
             <div className="feature-card">
               <h3>DER verification data</h3>
               <p><code>spatiotemporal_generation.csv</code> should include:</p>
@@ -148,7 +148,7 @@ const Help = ({ onClose }) => {
         </div>
         <div className="section-content">
           <ul>
-            <li>Candidate queue is empty: confirm CSV files exist under <code>client/public/datasets</code>.</li>
+            <li>Candidate queue is empty: confirm CSV files exist under <code>client/public/datasets_2026_04_month</code>, or set <code>VITE_URBAN_DATASET_DIR</code>.</li>
             <li>Map has fewer markers than queue rows: hourly records are grouped by <code>node_id</code>.</li>
             <li>MetaMask does not open: connect wallet and switch to the local Hardhat network.</li>
             <li>Registration fails: use a funded Hardhat account and verify contracts were deployed.</li>

@@ -2,7 +2,15 @@ from __future__ import annotations
 
 import pandas as pd
 
-from Simulator.experiments.common import DETECTORS, ensure_output_dir, load_monthly_generation, make_attack_frame, metrics
+from Simulator.experiments.common import (
+    ATTACK_SCENARIOS,
+    DETECTORS,
+    attack_metadata,
+    ensure_output_dir,
+    load_monthly_generation,
+    make_attack_frame,
+    metrics,
+)
 
 
 ATTACK_TYPES = [
@@ -15,6 +23,8 @@ ATTACK_TYPES = [
     "weather_spoofing",
     "replay_attack",
     "neighbor_inconsistent_attack",
+    "coordinated_near_bound",
+    "intermittent_burst",
 ]
 
 
@@ -26,10 +36,12 @@ def run() -> tuple[pd.DataFrame, pd.DataFrame]:
     for attack_type in ATTACK_TYPES:
         frame = make_attack_frame(base, attack_type)
         truth = frame["ground_truth_attack"]
+        scenario_meta = attack_metadata(attack_type, frame)
         for detector_name, detector in DETECTORS.items():
             prediction = detector(frame)
             row = {
                 "attack_type": attack_type,
+                **scenario_meta,
                 "detector": detector_name,
                 **metrics(truth, prediction),
             }
@@ -49,6 +61,9 @@ def main() -> None:
     taxonomy, baseline = run()
     print(f"attack_taxonomy_results.csv: {len(taxonomy)} rows")
     print(f"baseline_comparison_results.csv: {len(baseline)} rows")
+    print("Attack families:")
+    for name in ATTACK_TYPES:
+        print(f" - {name}: {ATTACK_SCENARIOS[name]['family']}")
     print(taxonomy.sort_values(["attack_type", "f1"], ascending=[True, False]).head(12).to_string(index=False))
 
 

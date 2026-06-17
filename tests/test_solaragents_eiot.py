@@ -46,7 +46,21 @@ def test_adaptive_detector_uses_monthly_fdia_labels():
 
 def test_attack_taxonomy_outputs_monthly_results():
     taxonomy, baseline = run_attack_taxonomy()
-    assert set(taxonomy["attack_type"]).issuperset({"dataset_fdia", "above_bound", "sensor_drift", "replay_attack"})
+    assert set(taxonomy["attack_type"]).issuperset(
+        {
+            "dataset_fdia",
+            "above_bound",
+            "near_bound",
+            "sensor_drift",
+            "replay_attack",
+            "coordinated_near_bound",
+            "intermittent_burst",
+        }
+    )
+    assert {"scenario_family", "attack_rate", "attack_rows"}.issubset(taxonomy.columns)
     assert set(baseline["detector"]).issuperset({"physics-bound", "adaptive-solaragent"})
     dataset_rows = taxonomy[taxonomy["attack_type"] == "dataset_fdia"]
     assert int(dataset_rows["records"].max()) == 36_000
+    mixed_rows = taxonomy[taxonomy["attack_type"] == "near_bound"]
+    assert int(mixed_rows["records"].max()) == 36_000
+    assert 0 < float(mixed_rows["attack_rate"].max()) < 0.10
