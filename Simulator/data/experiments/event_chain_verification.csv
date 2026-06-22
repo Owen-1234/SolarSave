@@ -1,0 +1,2 @@
+event_path,rows_checked,is_valid,first_error,first_hash,last_hash,event_type_count,event_types
+/Users/oushilin/Desktop/Solar/SolarSave/Simulator/data/experiments/eiot_event_log.csv,144721,True,,GENESIS,f08cbd764f066e2c9c4a90c796eb36b4498da5602eeae9ea1aee7bfc60bd6fe7,6,"feedback_update,market_update,on_chain_settlement,planner_decision,solar_report,verification_result"

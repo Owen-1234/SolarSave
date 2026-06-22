@@ -1,0 +1,12 @@
+attack_type,scenario_family,attack_rate,attack_rows,precision,recall,f1,false_acceptance_rate,false_rejection_rate,capability_level,paper_claim_guidance
+coordinated_near_bound,coordinated_stealth,0.05402777777777778,1945,0.0,0.0,0.0,1.0,0.0,outside_current_claim,"State explicitly as a current limitation requiring richer temporal, neighbor, or learned context."
+near_bound,stealth_physical_boundary,0.05,1800,0.0,0.0,0.0,1.0,0.0,outside_current_claim,"State explicitly as a current limitation requiring richer temporal, neighbor, or learned context."
+weather_spoofing,context_spoofing,0.05,1800,0.0,0.0,0.0,1.0,0.0,outside_current_claim,"State explicitly as a current limitation requiring richer temporal, neighbor, or learned context."
+within_bound_fraud,stealth_physical_boundary,0.05,1800,0.0,0.0,0.0,1.0,0.0,outside_current_claim,"State explicitly as a current limitation requiring richer temporal, neighbor, or learned context."
+intermittent_burst,temporal_persistence,0.01211111111111111,436,0.9898734177215189,0.8967889908256881,0.941034897713598,0.10321100917431193,0.00011247328759419637,partially_covered,"Claim as detectable evidence for screening and audit, not complete prevention."
+replay_attack,temporal_persistence,0.06,2160,0.9922698524244554,0.6537037037037037,0.7881663410549818,0.34629629629629627,0.0003250591016548463,partially_covered,"Claim as detectable evidence for screening and audit, not complete prevention."
+sensor_drift,temporal_persistence,0.08522222222222223,3068,0.9988696307460437,0.8640808344198174,0.9265990912268438,0.13591916558018252,9.109680553868577e-05,partially_covered,"Claim as detectable evidence for screening and audit, not complete prevention."
+above_bound,physics_impossible,0.05,1800,0.9604336043360434,0.9844444444444445,0.9722908093278464,0.015555555555555555,0.0021345029239766083,strongly_covered,Safe to claim as covered by the current physics-grounded screening pipeline.
+dataset_fdia,original_dataset,0.05,1800,0.975609756097561,1.0,0.9876543209876543,0.0,0.0013157894736842105,strongly_covered,Safe to claim as covered by the current physics-grounded screening pipeline.
+neighbor_inconsistent_attack,coordination_inconsistency,0.05,1800,1.0,1.0,1.0,0.0,0.0,strongly_covered,Safe to claim as covered by the current physics-grounded screening pipeline.
+nighttime_impossible,physics_impossible,0.04,1440,1.0,1.0,1.0,0.0,0.0,strongly_covered,Safe to claim as covered by the current physics-grounded screening pipeline.

@@ -24,6 +24,44 @@ VARIANTS = {
 }
 
 
+def build_delta_table(results: pd.DataFrame, baseline_variant: str = "static_physics_bound") -> pd.DataFrame:
+    baseline = results[results["variant"].eq(baseline_variant)].set_index("scenario")
+    rows = []
+    for row in results.itertuples(index=False):
+        if row.variant == baseline_variant:
+            continue
+        base = baseline.loc[row.scenario]
+        delta_recall = float(row.recall - base["recall"])
+        delta_precision = float(row.precision - base["precision"])
+        delta_f1 = float(row.f1 - base["f1"])
+        delta_false_acceptance = float(row.false_acceptance_rate - base["false_acceptance_rate"])
+        delta_false_rejection = float(row.false_rejection_rate - base["false_rejection_rate"])
+        if delta_f1 > 0.01 and delta_false_rejection <= 0.02:
+            interpretation = "helps_without_large_false_rejection_cost"
+        elif delta_f1 > 0.01:
+            interpretation = "helps_but_increases_false_rejections"
+        elif delta_f1 < -0.01:
+            interpretation = "hurts_or_overfits_this_scenario"
+        else:
+            interpretation = "no_material_change"
+        rows.append(
+            {
+                "scenario": row.scenario,
+                "baseline_variant": baseline_variant,
+                "variant": row.variant,
+                "delta_precision": delta_precision,
+                "delta_recall": delta_recall,
+                "delta_f1": delta_f1,
+                "delta_false_acceptance_rate": delta_false_acceptance,
+                "delta_false_rejection_rate": delta_false_rejection,
+                "baseline_f1": float(base["f1"]),
+                "variant_f1": float(row.f1),
+                "interpretation": interpretation,
+            }
+        )
+    return pd.DataFrame(rows).sort_values(["scenario", "delta_f1"], ascending=[True, False])
+
+
 def scenario_frame(base: pd.DataFrame, scenario: str) -> pd.DataFrame:
     data = base.copy()
     if scenario == "normal_weather":
@@ -85,12 +123,15 @@ def run() -> pd.DataFrame:
     output_dir = ensure_output_dir()
     results = pd.DataFrame(rows)
     results.to_csv(output_dir / "adaptive_agent_results.csv", index=False)
+    delta = build_delta_table(results)
+    delta.to_csv(output_dir / "adaptive_memory_delta.csv", index=False)
     return results
 
 
 def main() -> None:
     results = run()
     print(f"adaptive_agent_results.csv: {len(results)} rows")
+    print("adaptive_memory_delta.csv written")
     print(results.sort_values(["scenario", "f1"], ascending=[True, False]).to_string(index=False))
 
 

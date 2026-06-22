@@ -1,0 +1,103 @@
+{
+  "claim_boundary": {
+    "known_limits": [
+      "weather is city-level, not per-panel sensor telemetry",
+      "PV nodes and FDIA labels are synthetic but physically bounded",
+      "market demand and trades are simulated for benchmark control"
+    ],
+    "recommended_wording": "The dataset is a weather-driven, reproducible benchmark with scripted FDIA injection and market construction; it should not be described as a real utility deployment."
+  },
+  "created_for": "EIoT physics-grounded embodied IoT benchmark evaluation",
+  "data_sources": {
+    "solar_modeling": {
+      "library": "pvlib",
+      "modeling_steps": [
+        "city-level solar position and clear-sky GHI",
+        "observed shortwave radiation capped by clear-sky envelope",
+        "node-level panel area, efficiency, and temperature coefficient",
+        "inverter derating and bounded reporting noise"
+      ]
+    },
+    "weather": {
+      "cache_files": [
+        {
+          "bytes": 7242,
+          "exists": true,
+          "path": "Simulator/data/cache/open_meteo_weather_2026-05-01.json"
+        }
+      ],
+      "provider": "Open-Meteo Historical Weather API",
+      "variables": [
+        "temperature_2m",
+        "shortwave_radiation"
+      ]
+    }
+  },
+  "dataset_id": "SolarAgents-2026-04-month-five-city",
+  "files": {
+    "market_liquidity": {
+      "bytes": 72605,
+      "exists": true,
+      "path": "Simulator/data/datasets_2026_04_month/market_liquidity.csv",
+      "rows": 720
+    },
+    "p2p_trades": {
+      "bytes": 95647,
+      "exists": true,
+      "path": "Simulator/data/datasets_2026_04_month/p2p_trades.csv",
+      "rows": 1185
+    },
+    "spatiotemporal_generation": {
+      "bytes": 3692788,
+      "exists": true,
+      "path": "Simulator/data/datasets_2026_04_month/spatiotemporal_generation.csv",
+      "rows": 36000
+    },
+    "urban_energy_nodes": {
+      "bytes": 3582,
+      "exists": true,
+      "path": "Simulator/data/datasets_2026_04_month/urban_energy_nodes.csv",
+      "rows": 50
+    }
+  },
+  "generation_method": {
+    "default_reward_share": 0.2,
+    "fdia_injection": {
+      "attack_rate": 0.05,
+      "attack_records": 1800,
+      "rules": [
+        "nighttime impossible reports use a positive reported output when P_max is near zero",
+        "daylight FDIA reports multiply P_max by one of 0.42, 1.38, 1.55, or 1.82",
+        "verification_status is initialized as rejected for injected FDIA records"
+      ]
+    },
+    "nodes_per_city": 10,
+    "random_seed": 20260511,
+    "reserve_buffer_MW": 0.018,
+    "script": "Simulator/data/generate_monthly_datasets.py"
+  },
+  "selected_ratio": {
+    "liquidity_share": 0.8,
+    "reward_share": 0.2,
+    "robust_score": 0.6276824093954756
+  },
+  "selected_ratio_source": "Simulator/data/experiments/ratio_selection_summary.csv",
+  "spatial_scope": {
+    "cities": [
+      "Beijing",
+      "Chengdu",
+      "Hangzhou",
+      "Shanghai",
+      "Shenzhen"
+    ],
+    "city_count": 5,
+    "node_count": 50,
+    "nodes_per_city": 10
+  },
+  "time_window": {
+    "end_exclusive": "2026-05-01",
+    "hourly_timestamps": 720,
+    "start_inclusive": "2026-04-01",
+    "timezone": "Asia/Shanghai"
+  }
+}

@@ -26,3 +26,5 @@ Simulator/.pytest_cache/
 .DS_Store
 Thumbs.db
 Simulator/data/temp
+Simulator/data/experiments/connected_system_trace.csv
+Simulator/data/experiments/eiot_event_log.csv

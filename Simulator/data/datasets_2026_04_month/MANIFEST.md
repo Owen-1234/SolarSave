@@ -19,6 +19,9 @@ Imported into SolarSave on 2026-06-16.
 - `spatiotemporal_generation.csv`: hourly physical generation, reported generation, and FDIA labels
 - `market_liquidity.csv`: hourly verified supply, mechanism-driven reward/liquidity split, demand fulfillment, unmet demand, and slippage metrics
 - `p2p_trades.csv`: synthetic factory purchase records
+- `dataset_provenance.json`: machine-readable provenance for the EIoT benchmark,
+  including weather source, pvlib modeling path, FDIA injection rules, and claim
+  boundaries for paper writing
 
 ## Generation Code
 
@@ -28,7 +31,7 @@ The generator was imported to:
 
 The matching Open-Meteo weather cache was imported to:
 
-`Simulator/data/cache/open_meteo_weather_2026-04-01_2026-05-01.json`
+`Simulator/data/cache/open_meteo_weather_2026-05-01.json`
 
 Run from the SolarSave root:
 
